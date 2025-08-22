@@ -12,6 +12,12 @@ body { @apply bg-neutral-950 text-neutral-100 antialiased; }
 .btn { @apply inline-flex items-center justify-center rounded-md bg-neutral-800 hover:bg-neutral-700 px-4 py-3 text-base font-medium; }
 .chip { @apply inline-flex items-center rounded-full border border-neutral-700 px-3 py-2 text-base; }
 
+/* Equal-size weather chips (consistent width/height across values) */
+.chip-eq { @apply inline-flex items-center justify-center text-center rounded-full border border-neutral-700 w-20 h-10 text-sm leading-tight; }
+@media (min-width: 768px) {
+  .chip-eq { @apply w-24 h-12 text-base; }
+}
+
 /* Hide scrollbars on mobile carousels */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

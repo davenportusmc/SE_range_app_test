@@ -67,13 +67,13 @@ export default function ReticleVisualizer() {
         <div className="text-sm text-neutral-400">Distance: <span className="text-neutral-200 font-medium">{distance} yds</span></div>
         <div className="text-sm text-neutral-400">Hold: <span className="text-neutral-200 font-medium">{elevLabel} / {windLabel}</span></div>
       </div>
-      {sol && (
-        <div className="text-xs text-neutral-500">
-          elev: {sol.elevation.inches.toFixed(2)} in | {sol.elevation.mil.toFixed(2)} mil | {sol.elevation.moa.toFixed(2)} moa · wind: {sol.wind.inches.toFixed(2)} in | {sol.wind.mil.toFixed(2)} mil · TOF: {sol.tofSec.toFixed(3)} s · v: {Math.round(sol.velocityFps)} fps
-        </div>
-      )}
-      <div className="w-full overflow-auto rounded-md border border-neutral-800 bg-neutral-950">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block mx-auto">
+      {/* Troubleshooting details removed for production */}
+      <div className="w-full rounded-md border border-neutral-800 bg-neutral-950 flex justify-center">
+        <svg
+          viewBox={`0 0 ${size} ${size}`}
+          className="block w-full max-w-[420px] md:max-w-[560px] mx-auto"
+          style={{ aspectRatio: '1 / 1' }}
+        >
           <rect x={0} y={0} width={size} height={size} fill="#0a0a0a" />
           {/* Grid */}
           {Array.from({ length: totalLines }).map((_, i) => {

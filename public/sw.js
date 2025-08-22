@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const STATIC_ASSETS = ['/', '/manifest.webmanifest'];
+const STATIC_ASSETS = ['/', '/manifest.webmanifest', '/senamelogo.png', '/seplanlogo.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -40,8 +40,11 @@ self.addEventListener('fetch', (event) => {
   ) {
     event.respondWith(
       caches.match(request).then((cached) => cached || fetch(request).then((resp) => {
-        const respClone = resp.clone();
-        caches.open(STATIC_CACHE).then((cache) => cache.put(request, respClone));
+        // Only cache successful, same-origin basic responses
+        if (resp && resp.ok && resp.type === 'basic') {
+          const respClone = resp.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put(request, respClone));
+        }
         return resp;
       }))
     );
