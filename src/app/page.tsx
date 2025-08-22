@@ -9,9 +9,9 @@ const ReticleSelectors = dynamic(() => import('@/components/ReticleSelectors'), 
 export default function Page() {
   return (
     <main className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2 justify-between">
         <WeatherPill />
-        <div className="space-x-2">
+        <div className="space-x-2 shrink-0">
           <Link className="btn" href="/reticle">Reticle View</Link>
           <Link className="btn" href="/true">Truing</Link>
           <Link className="btn" href="/dope">DOPE Card</Link>

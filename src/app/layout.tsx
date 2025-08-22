@@ -1,7 +1,10 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import Image from 'next/image';
 import MobileActions from '@/components/MobileActions';
 import ClientBootstrap from '@/components/ClientBootstrap';
+import senaLogo from '../../public/senamelogo.png';
+import seplanLogo from '../../public/seplanlogo.png';
 
 export const metadata: Metadata = {
   title: 'Range-Tuned Ballistics Assistant',
@@ -24,12 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="container pt-4 pb-28">
           <header className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <a href="/" aria-label="Home">
-                <img src="/senamelogo.png?v=4" alt="SENA ME" className="h-10 md:h-12 w-auto" />
+              <a href="/" aria-label="Home" className="block">
+                <Image src={senaLogo} alt="SENA ME" className="h-10 md:h-12 w-auto" priority />
               </a>
             </div>
             <div>
-              <img src="/seplanlogo.png?v=4" alt="Strategic Edge Plan" className="h-8 md:h-10 w-auto" />
+              <Image src={seplanLogo} alt="Strategic Edge Plan" className="h-8 md:h-10 w-auto" priority />
             </div>
           </header>
           {children}

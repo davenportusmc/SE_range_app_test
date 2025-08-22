@@ -24,7 +24,7 @@ export default function WeatherPill() {
   const sosFps = useMemo(() => env ? Math.round(speedOfSound(env.temperatureC)) : undefined, [env]);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
+    <div className="flex flex-wrap items-center gap-2 gap-y-2 text-sm w-full">
       <span className="chip-eq flex-col">
         <span className="leading-tight">Temp</span>
         <span className="leading-tight font-semibold">{loading ? '…' : `${env?.temperatureC ?? '-'}°C`}</span>
@@ -41,7 +41,7 @@ export default function WeatherPill() {
         <span className="leading-tight">SoS</span>
         <span className="leading-tight font-semibold">{sosFps ?? '-'} fps</span>
       </span>
-      <button className="btn ml-auto" onClick={() => {
+      <button className="btn w-full sm:w-auto sm:ml-auto" onClick={() => {
         setLoading(true);
         fetchInitialWeather().then((data) => setEnv(data)).finally(() => setLoading(false));
       }}>Refresh</button>
