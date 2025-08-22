@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const STATIC_ASSETS = ['/', '/manifest.webmanifest', '/senamelogo.png', '/seplanlogo.png'];
+const STATIC_ASSETS = ['/', '/manifest.webmanifest', '/senamelogo.png?v=4', '/seplanlogo.png?v=4', '/senamelogo.png', '/seplanlogo.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
