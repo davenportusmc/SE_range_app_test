@@ -1,9 +1,10 @@
+"use client";
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import WeatherPill from '@/components/WeatherPill';
-import ProfileChips from '@/components/ProfileChips';
-import PlateChips from '@/components/PlateChips';
-import WindControls from '@/components/WindControls';
-import OutputPanel from '@/components/OutputPanel';
+const WindControls = dynamic(() => import('@/components/WindControls'), { ssr: false });
+const OutputPanel = dynamic(() => import('@/components/OutputPanel'), { ssr: false });
+const ReticleSelectors = dynamic(() => import('@/components/ReticleSelectors'), { ssr: false });
 
 export default function Page() {
   return (
@@ -17,12 +18,7 @@ export default function Page() {
         </div>
       </div>
 
-      <ProfileChips />
-
-      <section className="space-y-3">
-        <div className="text-sm text-neutral-400">Targets</div>
-        <PlateChips />
-      </section>
+      <ReticleSelectors />
 
       <WindControls />
 

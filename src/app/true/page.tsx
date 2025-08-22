@@ -1,8 +1,9 @@
+"use client";
+import dynamic from 'next/dynamic';
 import WeatherPill from '@/components/WeatherPill';
-import ProfileChips from '@/components/ProfileChips';
-import PlateChips from '@/components/PlateChips';
-import WindControls from '@/components/WindControls';
-import TruingPanel from '@/components/TruingPanel';
+const WindControls = dynamic(() => import('@/components/WindControls'), { ssr: false });
+const TruingPanel = dynamic(() => import('@/components/TruingPanel'), { ssr: false });
+const ReticleSelectors = dynamic(() => import('@/components/ReticleSelectors'), { ssr: false });
 
 export default function TruePage() {
   return (
@@ -10,11 +11,7 @@ export default function TruePage() {
       <div className="flex items-center justify-between">
         <WeatherPill />
       </div>
-      <ProfileChips />
-      <section className="space-y-3">
-        <div className="text-sm text-neutral-400">Targets</div>
-        <PlateChips />
-      </section>
+      <ReticleSelectors />
       <WindControls />
       <TruingPanel />
     </main>

@@ -40,10 +40,16 @@ export default function ReticleVisualizer() {
 
   const unit = rifle?.clickUnit ?? 'MIL';
   const gridUnit = unit; // draw grid in selected unit
-  const ppu = 60; // pixels per unit (mil or moa)
-  const halfUnits = gridUnit === 'MIL' ? 6 : 20; // show +/- range
-  const size = ppu * halfUnits * 2;
-  const mid = size / 2;
+  const MIL_TO_MOA = 3.43774677;
+  const spanMil = 6; // +/- 6 MIL viewport regardless of unit
+  const ppuMil = 60; // pixels per 1 MIL
+  const unitsPerMil = gridUnit === 'MIL' ? 1 : MIL_TO_MOA;
+  const ppu = ppuMil / (gridUnit === 'MIL' ? 1 : MIL_TO_MOA); // pixels per selected unit
+  const halfUnitsInt = Math.round(spanMil * unitsPerMil); // integer count of half-span in selected units
+  const totalLines = halfUnitsInt * 2 + 1; // grid line count across
+  const size = ppu * (totalLines - 1); // exact size to fit lines
+  const midIndex = halfUnitsInt;
+  const mid = midIndex * ppu;
 
   const elev = unit === 'MIL' ? sol?.elevation.mil ?? 0 : sol?.elevation.moa ?? 0;
   const wind = unit === 'MIL' ? sol?.wind.mil ?? 0 : sol?.wind.moa ?? 0;
@@ -61,15 +67,21 @@ export default function ReticleVisualizer() {
         <div className="text-sm text-neutral-400">Distance: <span className="text-neutral-200 font-medium">{distance} yds</span></div>
         <div className="text-sm text-neutral-400">Hold: <span className="text-neutral-200 font-medium">{elevLabel} / {windLabel}</span></div>
       </div>
+      {sol && (
+        <div className="text-xs text-neutral-500">
+          elev: {sol.elevation.inches.toFixed(2)} in | {sol.elevation.mil.toFixed(2)} mil | {sol.elevation.moa.toFixed(2)} moa · wind: {sol.wind.inches.toFixed(2)} in | {sol.wind.mil.toFixed(2)} mil · TOF: {sol.tofSec.toFixed(3)} s · v: {Math.round(sol.velocityFps)} fps
+        </div>
+      )}
       <div className="w-full overflow-auto rounded-md border border-neutral-800 bg-neutral-950">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block mx-auto">
           <rect x={0} y={0} width={size} height={size} fill="#0a0a0a" />
           {/* Grid */}
-          {Array.from({ length: halfUnits * 2 + 1 }).map((_, i) => {
+          {Array.from({ length: totalLines }).map((_, i) => {
             const x = i * ppu;
             const y = i * ppu;
-            const isAxis = i === halfUnits;
-            const major = (i - halfUnits) % (gridUnit === 'MIL' ? 1 : 5) === 0;
+            const isAxis = i === midIndex;
+            const majorEvery = gridUnit === 'MIL' ? 1 : Math.round(MIL_TO_MOA); // every 1 MIL
+            const major = ((i - midIndex) % majorEvery) === 0;
             const stroke = isAxis ? '#e5e5e5' : major ? '#666' : '#333';
             const w = isAxis ? 1.5 : major ? 1 : 0.5;
             return (

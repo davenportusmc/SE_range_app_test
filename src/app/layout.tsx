@@ -22,9 +22,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <div className="container pt-4 pb-28">
-          <header className="mb-4">
-            <h1 className="text-xl md:text-2xl font-semibold">Strategic Edge Gun Range</h1>
-            <p className="text-xs md:text-sm text-neutral-400">Chapel Hill, TN</p>
+          <header className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <a href="/" aria-label="Home">
+                <img src="/senamelogo.png" alt="SENA ME" className="h-10 md:h-12 w-auto" />
+              </a>
+            </div>
+            <div>
+              <img src="/seplanlogo.png" alt="Strategic Edge Plan" className="h-8 md:h-10 w-auto" />
+            </div>
           </header>
           {children}
         </div>

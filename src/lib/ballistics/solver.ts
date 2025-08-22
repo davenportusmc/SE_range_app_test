@@ -32,59 +32,62 @@ export interface SolveInput {
 
 export function solveOne(input: SolveInput): Solution {
   const { rifle, load, env, distanceYds } = input;
-  const stepYds = 2; // small fixed step
+  const stepYds = 2; // base step
   const g = 32.174; // ft/s^2
-  const bulletArea = 1; // folded into BC; we treat drag via BC scaling
-
-  let v = load.muzzleVelocityFps; // fps
-  let x = 0; // yds
-  let t = 0; // s
-  let dropIn = 0; // inches, relative to bore line
-  const rho = 1.225; // kg/m^3 placeholder; we could use airDensity but keep simple
   const sos = speedOfSound(env.temperatureC);
 
-  while (x < distanceYds) {
-    const stepFt = Math.min(stepYds, distanceYds - x) * 3; // yards to feet
-    const mach = v / sos;
-    const cd = cdForMach(load.bc.model, Math.max(0.3, Math.min(3.0, mach)));
-    // Very simplified deceleration: dv/dx proportional to cd/(BC)
-    const k = 0.00004; // tuned constant to keep results sane for demo
-    const dv = -k * (cd / Math.max(0.05, load.bc.value)) * v * (stepFt / 3);
-    v = Math.max(300, v + dv);
-    // time step ~ dx / v
-    const dt = stepFt / v;
-    t += dt;
-    // vertical drop under gravity (ignoring drag lift): y += 0.5 g dt^2
-    dropIn += 0.5 * g * dt * dt * 12; // ft->in
-    x += stepYds;
+  // Adjust MV by temperature sensitivity (baseline 59F)
+  const tempF = env.temperatureC * 9/5 + 32;
+  const sens = load.tempSensitivityFpsPer10F ?? 0;
+  const mvAdjusted = load.muzzleVelocityFps + ((tempF - 59) / 10) * sens;
+
+  function simulate(toYds: number) {
+    let v = mvAdjusted; // fps
+    let x = 0; // yds
+    let t = 0; // s
+    while (x < toYds) {
+      const dxYds = Math.min(stepYds, toYds - x);
+      const stepFt = dxYds * 3; // yards to feet
+      const mach = v / sos;
+      const cd = cdForMach(load.bc.model, Math.max(0.3, Math.min(3.0, mach)));
+      const k = 0.00004; // tuned constant to keep results sane for demo
+      const dv = -k * (cd / Math.max(0.05, load.bc.value)) * v * (stepFt / 3);
+      v = Math.max(300, v + dv);
+      const dt = stepFt / v;
+      t += dt;
+      x += dxYds;
+    }
+    // vertical drop assuming zero initial vertical velocity
+    const dropIn = 0.5 * g * t * t * 12; // ft->in
+    return { v, t, dropIn };
   }
 
-  // Zeroing correction: bring drop to be relative to zero at zeroRange
-  // For demo, approximate zero effect as linear near muzzle; real solver would integrate line of sight geometry
-  const zeroRange = rifle.zeroRangeYds;
-  if (distanceYds >= zeroRange) {
-    // remove portion of gravitational drop before zero
-    dropIn -= dropIn * (zeroRange / Math.max(distanceYds, 1));
-  }
+  // Simulate to distance and to zero. Compute elevation relative to the line-of-sight (LOS)
+  // modeled as a straight line from (0, sightHeightIn) to (zeroRange, drop_at_zero).
+  const main = simulate(distanceYds);
+  const zeroRange = Math.max(1, rifle.zeroRangeYds);
+  const zero = simulate(zeroRange);
+  const losAtDistance = rifle.sightHeightIn + (zero.dropIn - rifle.sightHeightIn) * (distanceYds / zeroRange);
+  const relDropIn = main.dropIn - losAtDistance;
 
-  // Wind drift simple: crosswind in mph -> inches proportional to TOF
+  // Wind drift simple: crosswind in mph -> inches proportional to main TOF
   const xwind = crosswindComponentMph(env.windSpeedMph, env.windDirectionDeg, env.azimuthDeg ?? 0);
-  const windIn = xwind * t * 0.8; // tuned demo coefficient
+  const windIn = xwind * main.t * 0.8; // tuned demo coefficient
 
-  const mil = inchesToMil(dropIn, distanceYds);
-  const moa = inchesToMoa(dropIn, distanceYds);
+  const mil = inchesToMil(relDropIn, distanceYds);
+  const moa = inchesToMoa(relDropIn, distanceYds);
   const windMil = inchesToMil(windIn, distanceYds);
   const windMoa = inchesToMoa(windIn, distanceYds);
 
-  const energy = energyFtlb(v, load.bulletWeightGr);
-  const transonic = v < 1.2 * sos && v > 0.8 * sos;
+  const energy = energyFtlb(main.v, load.bulletWeightGr);
+  const transonic = main.v < 1.2 * sos && main.v > 0.8 * sos;
 
   return {
     distanceYds,
-    elevation: { mil, moa, inches: dropIn },
+    elevation: { mil, moa, inches: relDropIn },
     wind: { mil: windMil, moa: windMoa, inches: windIn },
-    tofSec: t,
-    velocityFps: v,
+    tofSec: main.t,
+    velocityFps: main.v,
     energyFtlb: energy,
     transonic,
   };

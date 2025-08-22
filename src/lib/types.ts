@@ -7,9 +7,6 @@ export interface RifleProfile {
   sightHeightIn: number;
   clickUnit: ClickUnit;
   clickValue: number;
-  barrelLengthIn?: number;
-  twistRate?: string;
-  reticleId?: string;
 }
 
 export interface LoadProfile {
@@ -54,4 +51,12 @@ export interface Solution {
   velocityFps: number;
   energyFtlb: number;
   transonic: boolean;
+}
+
+// Unified profile combining a specific rifle with a specific load
+export interface CombinedProfile {
+  id: string;
+  name: string;
+  rifleId: string;
+  loadId: string;
 }

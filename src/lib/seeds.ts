@@ -1,6 +1,4 @@
 import type { LoadProfile, RifleProfile } from './types';
-import { DEFAULT_RETICLE_ID } from './constants';
-
 export const demoRifles: RifleProfile[] = [
   {
     id: 'rifle-65cm',
@@ -9,7 +7,6 @@ export const demoRifles: RifleProfile[] = [
     sightHeightIn: 1.8,
     clickUnit: 'MIL',
     clickValue: 0.1,
-    reticleId: DEFAULT_RETICLE_ID,
   },
   {
     id: 'rifle-308',
@@ -18,7 +15,6 @@ export const demoRifles: RifleProfile[] = [
     sightHeightIn: 1.8,
     clickUnit: 'MIL',
     clickValue: 0.1,
-    reticleId: DEFAULT_RETICLE_ID,
   },
   {
     id: 'rifle-223',
@@ -27,7 +23,6 @@ export const demoRifles: RifleProfile[] = [
     sightHeightIn: 1.8,
     clickUnit: 'MIL',
     clickValue: 0.1,
-    reticleId: DEFAULT_RETICLE_ID,
   },
   {
     id: 'rifle-300wm',
@@ -36,7 +31,6 @@ export const demoRifles: RifleProfile[] = [
     sightHeightIn: 1.8,
     clickUnit: 'MIL',
     clickValue: 0.1,
-    reticleId: DEFAULT_RETICLE_ID,
   },
 ];
 

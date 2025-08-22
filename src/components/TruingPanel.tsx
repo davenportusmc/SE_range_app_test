@@ -20,13 +20,22 @@ export default function TruingPanel() {
   const rifle = useMemo(() => rifles.find((r) => r.id === rifleId), [rifles, rifleId]);
   const load = useMemo(() => loads.find((l) => l.id === loadId), [loads, loadId]);
 
-  const [distance, setLocalDistance] = useState<number>(plates.includes(600) ? 600 : plates[0] ?? 100);
+  const [distance, setLocalDistance] = useState<number>(
+    () => {
+      const fromLs = typeof window !== 'undefined' ? Number(localStorage.getItem('truing.distance') ?? 'NaN') : NaN;
+      return isFinite(fromLs) && fromLs > 0 ? fromLs : (plates.includes(600) ? 600 : plates[0] ?? 100);
+    }
+  );
   const [observed, setObserved] = useState<number>(0);
-  const [zeroOffset, setZeroOffset] = useState<number>(0);
+  const [zeroOffset, setZeroOffset] = useState<number>(() => {
+    const fromLs = typeof window !== 'undefined' ? Number(localStorage.getItem('truing.zeroOffset') ?? 'NaN') : NaN;
+    return isFinite(fromLs) ? fromLs : 0;
+  });
   const [computing, setComputing] = useState(false);
   const [proposal, setProposal] = useState<{ mvFps: number; delta: number; predicted: number; residual: number; transonic: boolean } | null>(null);
   const [baseline, setBaseline] = useState<{ predicted: number } | null>(null);
   const unit = rifle?.clickUnit ?? 'MIL';
+  const tol = unit === 'MIL' ? 0.01 : 0.25;
   const mvBounds = useMemo(() => {
     const base = load?.muzzleVelocityFps ?? 2500;
     const min = Math.max(800, Math.round(base * 0.7));
@@ -47,6 +56,14 @@ export default function TruingPanel() {
     run();
     return () => { canceled = true; };
   }, [rifle, load, env, distance, unit]);
+
+  // persist distance and zeroOffset
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('truing.distance', String(distance));
+  }, [distance]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('truing.zeroOffset', String(zeroOffset));
+  }, [zeroOffset]);
 
   const bisectSolve = useCallback(async (rifle: RifleProfile, load: LoadProfile, targetClicks: number, distance: number) => {
     const mv0 = Math.max(800, load.muzzleVelocityFps * 0.7);
@@ -126,6 +143,12 @@ export default function TruingPanel() {
     setAppliedNote(`Applied ${proposal?.mvFps} fps. Residual: ${proposal?.residual.toFixed(3)} ${unit}`);
     setTimeout(() => setAppliedNote(null), 4000);
     setProposal(null);
+    // re-solve baseline immediately to reflect new MV
+    (async () => {
+      if (!rifle || !load) return;
+      const [s] = await solveDope(rifle, { ...load, muzzleVelocityFps: proposal?.mvFps ?? load.muzzleVelocityFps } as LoadProfile, env, [distance]);
+      setBaseline({ predicted: toUnit(s.elevation, unit) });
+    })();
   }, [proposal, updateMv]);
 
   if (!rifle || !load) return <div className="text-sm text-neutral-400">Select a rifle and load first.</div>;
@@ -140,20 +163,33 @@ export default function TruingPanel() {
         </div>
         <div>
           <label className="text-xs text-neutral-400">Observed Elevation ({unit})</label>
-          <input type="number" inputMode="decimal" className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2"
+          <input type="number" inputMode="decimal" step={unit === 'MIL' ? 0.1 : 0.25} className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2"
             placeholder={unit === 'MIL' ? 'e.g. 4.2' : 'e.g. 14.5'} value={observed}
             onChange={(e) => setObserved(parseFloat(e.target.value))} />
-        </div>
-        <div>
-          <label className="text-xs text-neutral-400">Zero Offset ({unit})</label>
-          <input type="number" inputMode="decimal" className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2"
-            placeholder={unit === 'MIL' ? 'e.g. 0.1' : 'e.g. 0.5'} value={zeroOffset}
-            onChange={(e) => setZeroOffset(parseFloat(e.target.value))} />
         </div>
         <div className="flex items-end">
           <button className="btn w-full" onClick={compute} disabled={computing || !isFinite(observed)}>
             {computing ? 'Computing…' : 'Compute MV'}
           </button>
+        </div>
+
+        <div className="md:col-span-3">
+          <details className="bg-neutral-900/40 border border-neutral-800 rounded-md">
+            <summary className="cursor-pointer select-none list-none px-3 py-2 text-sm text-neutral-300 flex items-center justify-between">
+              <span>Options</span>
+              <span className="text-xs text-neutral-500">Zero offset, bounds, tolerance</span>
+            </summary>
+            <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-neutral-400">Zero Offset ({unit})</label>
+                <input type="number" inputMode="decimal" step={unit === 'MIL' ? 0.1 : 0.25} className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2"
+                  placeholder={unit === 'MIL' ? 'e.g. 0.1' : 'e.g. 0.5'} value={zeroOffset}
+                  onChange={(e) => setZeroOffset(parseFloat(e.target.value))} />
+              </div>
+              <div className="text-xs text-neutral-400 flex items-end">MV bounds: <span className="ml-1 text-neutral-200">{mvBounds.min}-{mvBounds.max} fps</span></div>
+              <div className="text-xs text-neutral-400 flex items-end">Tolerance: <span className="ml-1 text-neutral-200">{tol} {unit}</span></div>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -165,14 +201,17 @@ export default function TruingPanel() {
         <div className="bg-neutral-900/50 rounded-md p-3 space-y-2">
           <div className="text-sm">Proposed MV: <span className="font-semibold">{proposal.mvFps} fps</span> ({proposal.delta >= 0 ? '+' : ''}{proposal.delta} fps)</div>
           <div className="text-xs text-neutral-400">Predicted elevation at {distance} yds with proposed MV: {proposal.predicted.toFixed(2)} {unit}</div>
-          <div className={"text-xs " + (Math.abs(proposal.residual) < (unit === 'MIL' ? 0.01 : 0.25) ? 'text-green-400' : 'text-amber-400')}>
-            Residual (predicted − observed): {proposal.residual.toFixed(3)} {unit}
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full border ${Math.abs(proposal.residual) <= tol ? 'border-green-500 text-green-400' : 'border-amber-500 text-amber-400'}`}>
+              {Math.abs(proposal.residual) <= tol ? 'Within tolerance' : 'Outside tolerance'} ({tol} {unit})
+            </span>
+            <span className="text-neutral-400">Residual: {proposal.residual.toFixed(3)} {unit}</span>
           </div>
           {proposal.transonic && (
             <div className="text-xs text-red-400">Warning: Solution is transonic at this distance. Truing at transonic can be unstable.</div>
           )}
           <div className="flex gap-2">
-            <button className="btn" onClick={apply}>Apply to Load</button>
+            <button className="btn" onClick={apply} disabled={Math.abs(proposal.residual) > tol}>Apply to Load</button>
             <button className="btn" onClick={() => setProposal(null)}>Discard</button>
           </div>
         </div>
