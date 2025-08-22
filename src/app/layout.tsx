@@ -29,9 +29,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Image src="/SEnamelogo.png?v=5" alt="SENA ME" width={400} height={120} className="h-10 md:h-12 w-auto" priority />
               </a>
             </div>
-            <div>
-              <Image src="/SEplanlogo.png?v=5" alt="Strategic Edge Plan" width={300} height={100} className="h-8 md:h-10 w-auto" priority />
-            </div>
           </header>
           {children}
         </div>
