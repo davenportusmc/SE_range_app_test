@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+body { @apply bg-neutral-950 text-neutral-100 antialiased; }
+
+.container { @apply max-w-6xl mx-auto px-4; }
+
+/* Larger touch targets by default for mobile ergonomics */
+.btn { @apply inline-flex items-center justify-center rounded-md bg-neutral-800 hover:bg-neutral-700 px-4 py-3 text-base font-medium; }
+.chip { @apply inline-flex items-center rounded-full border border-neutral-700 px-3 py-2 text-base; }
+
+/* Hide scrollbars on mobile carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
